@@ -3,7 +3,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Main {
+public class lambda {
 
     public static void main(String[] args) {
 
