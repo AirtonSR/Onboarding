@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Chamados</title>
+</head>
+<body>
+
+<h1>Cadastro de Chamados</h1>
+
+<form id="formChamado">
+
+    <label for="nome">Nome:</label><br>
+    <input type="text" id="nome" name="nome" required><br><br>
+
+    <label for="titulo">Titulo do chamado::</label><br>
+    <input type="text" id="titulo" name="titulo" required><br><br>
+
+    <label for="descricao">Descrição:</label><br>
+    <input type="text" id="descricao" name="descricao" required><br><br>
+
+    <label for="deadline">Deadline:</label><br>
+    <input type="date" id="deadline" name="deadline" required><br><br>
+
+    <button type="submit">Cadastrar</button>
+</form>
+
+<h2>Lista de Chamados</h2>
+
+<table border="1" id="tabelaChamados">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Titulo</th>
+        <th>Descrição</th>
+        <th>Status</th>
+        <th>Deadline</th>
+        <th>Data de Abertura</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Chamados serão inseridos aqui -->
+    </tbody>
+</table>
+
+<script>
+    // Função para formatar a data no formato PT-BR
+    function formatarData(data) {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        return new Date(data).toLocaleDateString('pt-BR', options);
+    }
+
+    // Função para carregar e exibir chamados
+    function carregarChamados() {
+        fetch('http://localhost:8080/api/chamados')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar chamados. Status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Chamados:', data);
+
+                // Obtém a referência da tabela
+                const tabela = document.getElementById('tabelaChamados').getElementsByTagName('tbody')[0];
+                tabela.innerHTML = ''; // Limpa a tabela antes de preencher
+
+                // Insere os dados na tabela
+                data.forEach(chamado => {
+                    const linha = tabela.insertRow();
+
+                    // Adiciona cada célula com os dados do chamado
+                    linha.insertCell(0).innerText = chamado.id;
+                    linha.insertCell(1).innerText = chamado.nome || 'Não informado';
+                    linha.insertCell(2).innerText = chamado.titulo;
+                    linha.insertCell(3).innerText = chamado.descricao || 'Não informada';
+                    linha.insertCell(4).innerText = chamado.status ? 'Fechado' : 'Novo';
+                    linha.insertCell(5).innerText = formatarData(chamado.deadLine); // Formata a data no formato PT-BR
+                    linha.insertCell(6).innerText = chamado.dataDeAbertura;  // Formata a data de abertura no formato PT-BR
+                });
+            })
+            .catch(error => {
+                alert('Erro ao carregar chamados: ' + error.message);
+                console.error('Erro:', error);
+            });
+    }
+
+    // Chama a função para carregar os chamados quando a página for carregada
+    window.onload = carregarChamados;
+
+    // Evento para cadastro de chamado
+    document.getElementById('formChamado').addEventListener('submit', function(event) {
+        event.preventDefault(); // Impede o envio tradicional do formulário
+
+        // Cria um objeto com os dados do formulário
+        const chamado = {
+            nome: document.getElementById('nome').value,
+            titulo: document.getElementById('titulo').value,
+            descricao: document.getElementById('descricao').value,
+            status: false,
+            deadLine: document.getElementById('deadline').value,  // O valor do campo já estará no formato correto (yyyy-mm-dd)
+        };
+
+        console.log('Chamado para cadastrar:', chamado); // Log dos dados enviados
+
+        // Enviar os dados para o backend
+        fetch('http://localhost:8080/api/chamados', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(chamado)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro ao cadastrar o chamado. Status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Chamado cadastrado com sucesso!');
+                console.log('Chamado criado:', data);
+                carregarChamados();  // Atualiza a exibição da lista de chamados
+            })
+            .catch(error => {
+                alert('Falha ao cadastrar chamado: ' + error.message);
+                console.error('Erro:', error);
+            });
+    });
+</script>
+
+</body>
+</html>
